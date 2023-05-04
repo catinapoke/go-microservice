@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/catinapoke/go-microservice/catfacts"
@@ -13,6 +14,7 @@ func RunCatFactsServer() {
 
 	apiServer := catfacts.NewApiServer(service)
 
+	fmt.Println("Starting Cat fact service at port 3001")
 	log.Fatal(apiServer.Start(":3001"))
 }
 
@@ -22,6 +24,7 @@ func RunFileServer() {
 
 	apiServer := fileservice.CreateAPIServer(service)
 
+	fmt.Println("Starting File service at port 3001")
 	log.Fatal(apiServer.Start(":3001"))
 }
 
