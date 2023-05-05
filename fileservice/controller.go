@@ -3,6 +3,7 @@ package fileservice
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -12,6 +13,12 @@ import (
 
 type FileServiceController struct {
 	url string
+}
+
+func CreateController(ip, port string) FileServiceController {
+	return FileServiceController{
+		url: fmt.Sprintf("http://%s:%s", ip, port),
+	}
 }
 
 func (c *FileServiceController) Get(id int) (string, error) {
