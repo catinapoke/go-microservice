@@ -8,4 +8,4 @@ RUN go build -o /go/bin/app -v ./...
 
 EXPOSE 3001
 
-RUN /go/bin/app
+CMD [ "/go/bin/app"]
