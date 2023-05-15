@@ -16,8 +16,12 @@ type FileServiceController struct {
 }
 
 func CreateController(ip, port string) FileServiceController {
+	return CreateControllerByUrl(fmt.Sprintf("http://%s:%s", ip, port))
+}
+
+func CreateControllerByUrl(url string) FileServiceController {
 	return FileServiceController{
-		url: fmt.Sprintf("http://%s:%s", ip, port),
+		url: url,
 	}
 }
 
