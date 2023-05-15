@@ -24,7 +24,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	svc := CreateFileService()
+	svc := CreateDefaultFileService()
 	_, err := svc.Get(0)
 
 	if err != nil {
@@ -41,7 +41,7 @@ func createRandomFile() (string, error) {
 }
 
 func TestSet(t *testing.T) {
-	svc := CreateFileService()
+	svc := CreateDefaultFileService()
 
 	path, err := createRandomFile()
 
@@ -58,7 +58,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	svc := CreateFileService()
+	svc := CreateDefaultFileService()
 	path, err := createRandomFile()
 
 	if err != nil {
@@ -80,16 +80,14 @@ func TestRemove(t *testing.T) {
 }
 
 func launchBackgroundFileService() {
-	apiServer := CreateAPIServer(CreateFileService())
+	apiServer := CreateAPIServer(CreateDefaultFileService())
 	go func() {
 		log.Println(apiServer.Start(":3001"))
 	}()
 }
 
 func createController() FileServiceController {
-	return FileServiceController{
-		url: "http://127.0.0.1:3001",
-	}
+	return CreateController("127.0.0.1", "3001")
 }
 
 func TestControllerSet(t *testing.T) {

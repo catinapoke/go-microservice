@@ -3,29 +3,39 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
-	"github.com/catinapoke/go-microservice/catfacts"
 	"github.com/catinapoke/go-microservice/fileservice"
 )
 
-func RunCatFactsServer() {
-	service := catfacts.NewCatFactService("https://catfact.ninja/fact")
-	service = catfacts.NewLoggingService(service)
+func GetPort() string {
+	port := os.Getenv("FILESERVICE_PORT")
+	if port == "" {
+		port = "3001"
+	}
 
-	apiServer := catfacts.NewApiServer(service)
+	return port
+}
 
-	fmt.Println("Starting Cat fact service at port 3001")
-	log.Fatal(apiServer.Start(":3001"))
+func GetPath() string {
+	path := os.Getenv("FILESERVICE_PATH")
+	if path == "" {
+		path = "./bin"
+	}
+
+	return path
 }
 
 func RunFileServer() {
-	service := fileservice.CreateFileService()
+	path := GetPath()
+	service := fileservice.CreateFileService(path)
 	service = fileservice.CreateFileServiceLogger(service)
 
 	apiServer := fileservice.CreateAPIServer(service)
 
-	fmt.Println("Starting File service at port 3001")
-	log.Fatal(apiServer.Start(":3001"))
+	port := GetPort()
+	fmt.Printf("Starting File service at port %s and storage at '%s'\n", port, path)
+	log.Fatal(apiServer.Start(":" + port))
 }
 
 func main() {

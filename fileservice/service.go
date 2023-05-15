@@ -16,8 +16,12 @@ type LocalFileService struct {
 	storage_path string
 }
 
-func CreateFileService() FileService {
-	return &LocalFileService{"./bin"}
+func CreateFileService(path string) FileService {
+	return &LocalFileService{path}
+}
+
+func CreateDefaultFileService() FileService {
+	return CreateFileService("./bin")
 }
 
 func (svc *LocalFileService) getPath(id int) string {
