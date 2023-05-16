@@ -35,6 +35,7 @@ func (s *ApiServer) Get(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Can't convert id '%s' to int!", id_str), http.StatusNotFound)
+		fmt.Printf("Get: Can't convert id '%s' to int! %v\n", id_str, err)
 		return
 	}
 
@@ -42,6 +43,7 @@ func (s *ApiServer) Get(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Can't get file with id '%d'!", id), http.StatusNotFound)
+		fmt.Printf("Get: Got error while uploading file! %v\n", err)
 		return
 	}
 
@@ -49,27 +51,64 @@ func (s *ApiServer) Get(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, path)
 }
 
-// Modified of https://stackoverflow.com/questions/45541656/golang-send-file-via-post-request
 func upload(w http.ResponseWriter, r *http.Request) (string, error) {
-	file, handler, err := r.FormFile("file")
+	// Generate filename
+	filename := randStringRunes(20)
+	url := r.URL.Query().Get("url")
+
+	var err error
+	if url != "" {
+		err = loadByUrl(filename, url)
+	} else {
+		err = loadByMultipart(filename, r)
+	}
+
 	if err != nil {
-		//panic(err) //dont do this
-		return "", err
+		return "", fmt.Errorf("upload() error: %w", err)
+	}
+
+	return filename, nil
+}
+
+func loadByUrl(filename, url string) error {
+	resp, err := http.Get(url)
+
+	if err != nil {
+		return fmt.Errorf("load(): empty file: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Copy data
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("load(): can't create temp file: %w", err)
+	}
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return fmt.Errorf("load(): can't save data to file: %w", err)
+	}
+
+	return nil
+}
+
+func loadByMultipart(filename string, r *http.Request) error {
+	// Modified of https://stackoverflow.com/questions/45541656/golang-send-file-via-post-request
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		return fmt.Errorf("loadByMultipart(): can't read multipart: %w", err)
 	}
 	defer file.Close()
-
-	// Generate filename
-	filename := randStringRunes(10) + "_" + handler.Filename
 
 	// copy example
 	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer f.Close()
 	io.Copy(f, file)
 
-	return filename, nil
+	return nil
 }
 
 func (s *ApiServer) Set(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +116,7 @@ func (s *ApiServer) Set(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Got error while uploading file!", http.StatusBadRequest)
+		fmt.Printf("Set: Got error while uploading file! %v\n", err)
 		return
 	}
 
@@ -84,6 +124,7 @@ func (s *ApiServer) Set(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Got error while saving file!", http.StatusBadRequest)
+		fmt.Printf("Set: Got error while saving file! %v\n", err)
 		return
 	}
 
@@ -96,6 +137,7 @@ func (s *ApiServer) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Can't convert id to int!", http.StatusNotFound)
+		fmt.Printf("Delete: Can't convert id to int! %v\n", err)
 		return
 	}
 
@@ -103,6 +145,7 @@ func (s *ApiServer) Delete(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Can't delete file!", http.StatusNotFound)
+		fmt.Printf("Delete: Can't delete file! %v\n", err)
 		return
 	}
 

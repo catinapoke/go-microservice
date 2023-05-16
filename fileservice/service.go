@@ -62,7 +62,7 @@ func (svc *LocalFileService) Get(id int) (string, error) {
 	path := svc.getPath(id)
 
 	if !svc.fileExists(path) {
-		return "", os.ErrNotExist
+		return "", fmt.Errorf("Get() error: %w", os.ErrNotExist)
 	}
 
 	return path, nil
@@ -74,7 +74,7 @@ func (svc *LocalFileService) Set(path string) (int, error) {
 	err := os.Rename(path, local_path)
 
 	if err != nil {
-		return -1, err
+		return -1, fmt.Errorf("Set() error: %w", err)
 	}
 
 	return id, nil
@@ -84,7 +84,7 @@ func (svc *LocalFileService) Delete(id int) error {
 	path := svc.getPath(id)
 
 	if err := os.Remove(path); err != nil {
-		return err
+		return fmt.Errorf("Delete() error: %w", err)
 	}
 
 	return nil

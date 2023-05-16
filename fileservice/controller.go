@@ -40,7 +40,7 @@ func (c *FileServiceController) Get(id int) (string, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return "", errors.New("got http error " + response.Status)
+		return "", errors.New("got http error: " + response.Status)
 	}
 
 	// Copy the response body
@@ -62,39 +62,33 @@ func (c *FileServiceController) Get(id int) (string, error) {
 func (c *FileServiceController) Set(path string) (int, error) {
 	// Open the file you want to send
 
-	file, err := os.Open(path)
-	if err != nil {
-		return -1, err
-	}
-	defer file.Close()
+	var body *bytes.Buffer = nil
+	var writer *multipart.Writer
+	var err error
 
-	// Create a new multipart form
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
+	if path[:4] != "http" {
+		body, writer, err = c.createMultipartForm(path)
 
-	// Create a part for the file and add it to the form
-	part, err := writer.CreateFormFile("file", file.Name())
-	if err != nil {
-		return -1, err
-	}
-
-	_, err = io.Copy(part, file)
-	if err != nil {
-		return -1, err
-	}
-
-	// Close the multipart form
-	err = writer.Close()
-	if err != nil {
-		return -1, err
+		if err != nil {
+			return -1, fmt.Errorf("FileSerivceController Set() error: %w", err)
+		}
 	}
 
 	// Create a new POST request with the multipart form as the body
-	request, err := http.NewRequest("POST", c.url+"/set", body)
-	if err != nil {
-		return -1, err
+	var request *http.Request
+	if body != nil {
+		request, err = http.NewRequest("POST", c.url+"/set", body)
+		if err != nil {
+			return -1, err
+		}
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+	} else {
+		request, err = http.NewRequest("POST", c.url+"/set?url="+path, nil)
+		if err != nil {
+			return -1, err
+		}
+		request.Header.Set("Content-Type", "multipart/form-data")
 	}
-	request.Header.Set("Content-Type", writer.FormDataContentType())
 
 	// Send the request and get the response
 	client := &http.Client{}
@@ -105,7 +99,7 @@ func (c *FileServiceController) Set(path string) (int, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return -1, errors.New("got http error " + response.Status)
+		return -1, errors.New("got http error: " + response.Status)
 	}
 
 	// Read the response body
@@ -120,6 +114,45 @@ func (c *FileServiceController) Set(path string) (int, error) {
 	}
 
 	return id, nil
+}
+
+func (c *FileServiceController) createMultipartForm(path string) (*bytes.Buffer, *multipart.Writer, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer file.Close()
+
+	// Create a new multipart form
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Create a part for the file and add it to the form
+	part, err := writer.CreateFormFile("file", file.Name())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Close the multipart form
+	err = writer.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return body, writer, nil
+}
+
+func (c *FileServiceController) createEmptyMultipartForm(path string) (*bytes.Buffer, *multipart.Writer, error) {
+	// Create a new multipart form
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	return body, writer, nil
 }
 
 func (c *FileServiceController) Delete(id int) error {

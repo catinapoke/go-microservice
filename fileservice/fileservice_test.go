@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestCreate(t *testing.T) {
@@ -84,6 +85,8 @@ func launchBackgroundFileService() {
 	go func() {
 		log.Println(apiServer.Start(":3001"))
 	}()
+
+	time.Sleep(100 * time.Millisecond)
 }
 
 func createController() FileServiceController {
@@ -96,6 +99,22 @@ func TestControllerSet(t *testing.T) {
 	launchBackgroundFileService()
 
 	id, err := controller.Set("go.mod")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Printf("Set with id %d\n", id)
+}
+
+func TestControllerSetUrl(t *testing.T) {
+	url := "https://go.dev/images/go-logo-white.svg"
+
+	// Specify the URL to which you want to send the file
+	controller := createController()
+	launchBackgroundFileService()
+
+	id, err := controller.Set(url)
 
 	if err != nil {
 		t.Fatal(err)
