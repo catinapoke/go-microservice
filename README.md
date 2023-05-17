@@ -25,4 +25,4 @@ It is covered with tests in `fileservice/fileservice_test.go` and has controller
 You can launch it with `go run main.go` and it will use default settings  
 or using docker  
 `docker build -t catinapoke/go-microservice .`  
-`docker run -l fileservice -p 3001:3001 --rm --env FILESERVICE_PATH=/var/fileservice/data --mount type=bind,src=./data,dst=/var/fileservice/data catinapoke/go-microservice`
+`docker run -l fileservice -p 3001:3001 --rm --env FILESERVICE_PATH=/go/data --mount t type=bind,src=./bin,dst=/go/data catinapoke/go-microservice`
