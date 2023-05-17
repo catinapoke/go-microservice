@@ -26,8 +26,26 @@ func GetPath() string {
 	return path
 }
 
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func CheckFileDestination(path string) {
+	if b, _ := exists(path); !b {
+		os.MkdirAll(path, 0774)
+	}
+}
+
 func RunFileServer() {
 	path := GetPath()
+	CheckFileDestination(path)
 	service := fileservice.CreateFileService(path)
 	service = fileservice.CreateFileServiceLogger(service)
 
